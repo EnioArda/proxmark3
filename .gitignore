@@ -11,7 +11,6 @@
 *.dll
 *.moc.cpp
 *.exe
-proxmark3.log
 proxmark
 proxmark3
 flasher
@@ -28,4 +27,4 @@ fpga/*
 !fpga/go.bat
 !fpga/sim.tcl
 
-
+proxmark3.log
