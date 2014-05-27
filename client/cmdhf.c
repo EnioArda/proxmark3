@@ -32,6 +32,14 @@ int CmdHFTune(const char *Cmd)
   return 0;
 }
 
+int CmdHFSnoop(const char *Cmd) // Enio
+{
+  char * pEnd;
+  UsbCommand c = {CMD_ENIO_SNIFFER, {strtol(Cmd, &pEnd,0),strtol(pEnd, &pEnd,0),0}};
+  SendCommand(&c);
+  return 0;
+}
+
 static command_t CommandTable[] = 
 {
   {"help",        CmdHelp,          1, "This help"},
@@ -43,6 +51,7 @@ static command_t CommandTable[] =
   {"iclass",      CmdHFiClass,      1, "{ ICLASS RFIDs... }"},
   {"mf",      		CmdHFMF,		      1, "{ MIFARE RFIDs... }"},
   {"tune",        CmdHFTune,        0, "Continuously measure HF antenna tuning"},
+  {"snoop",       CmdHFSnoop,       0, "Generic LF/HF Snoop in Testing stage"},
   {NULL, NULL, 0, NULL}
 };
 

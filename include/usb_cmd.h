@@ -151,6 +151,8 @@ typedef struct {
 
 #define CMD_MIFARE_SNIFFER                                                0x0630
 
+#define CMD_ENIO_SNIFFER                                                  0x0631
+
 #define CMD_UNKNOWN                                                       0xFFFF
 
 

@@ -17,6 +17,7 @@
 #include "ui.h"
 #include "graph.h"
 #include "cmdparser.h"
+// #include "util.h" // Enio
 #include "cmdmain.h"
 #include "cmddata.h"
 
@@ -818,6 +819,41 @@ int CmdThreshold(const char *Cmd)
   return 0;
 }
 
+int CmdDirectionalThreshold(const char *Cmd)
+{
+	int8_t upThres = param_get8(Cmd, 0);
+	int8_t downThres = param_get8(Cmd, 1);
+  
+  printf("Applying Up Threshold: %d, Down Threshold: %d\n", upThres, downThres);
+  
+  int lastValue = GraphBuffer[0];
+  GraphBuffer[0] = 0; // Will be changed at the end, but init 0 as we adjust to last samples value if no threshold kicks in.
+  
+  for (int i = 1; i < GraphTraceLen; ++i) {
+    // Apply first threshold to samples heading up
+    if (GraphBuffer[i] >= upThres && GraphBuffer[i] > lastValue)
+    {
+      lastValue = GraphBuffer[i]; // Buffer last value as we overwrite it.
+      GraphBuffer[i] = 1;
+    }
+    // Apply second threshold to samples heading down
+    else if (GraphBuffer[i] <= downThres && GraphBuffer[i] < lastValue)
+    {
+      lastValue = GraphBuffer[i]; // Buffer last value as we overwrite it.
+      GraphBuffer[i] = -1;
+    }
+    else
+    {
+      lastValue = GraphBuffer[i]; // Buffer last value as we overwrite it.
+      GraphBuffer[i] = GraphBuffer[i-1];
+
+    }
+  }
+  GraphBuffer[0] = GraphBuffer[1]; // Aline with first edited sample.
+  RepaintGraphWindow();
+  return 0;
+}
+
 int CmdZerocrossings(const char *Cmd)
 {
   // Zero-crossings aren't meaningful unless the signal is zero-mean.
@@ -851,7 +887,7 @@ static command_t CommandTable[] =
 {
   {"help",          CmdHelp,            1, "This help"},
   {"amp",           CmdAmp,             1, "Amplify peaks"},
-  {"askdemod",      Cmdaskdemod,        1, "<0 or 1> -- Attempt to demodulate simple ASK tags"},
+  {"askdemod",      Cmdaskdemod,        1, "<0|1> -- Attempt to demodulate simple ASK tags"},
   {"autocorr",      CmdAutoCorr,        1, "<window length> -- Autocorrelation over window"},
   {"bitsamples",    CmdBitsamples,      0, "Get raw samples as bitstring"},
   {"bitstream",     CmdBitstream,       1, "[clock rate] -- Convert waveform into a bitstream"},
@@ -874,6 +910,7 @@ static command_t CommandTable[] =
   {"scale",         CmdScale,           1, "<int> -- Set cursor display scale"},
   {"threshold",     CmdThreshold,       1, "<threshold> -- Maximize/minimize every value in the graph window depending on threshold"},
   {"zerocrossings", CmdZerocrossings,   1, "Count time between zero-crossings"},
+  {"dirthreshold",  CmdDirectionalThreshold,   1, "<thres up> <thres down> -- Max rising higher up-thres/ Min falling lower down-thres, keep rest as prev."},
   {NULL, NULL, 0, NULL}
 };
 

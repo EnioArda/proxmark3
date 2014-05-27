@@ -1,0 +1,87 @@
+help             This help
+detectreader     ['l'|'h'] -- Detect external reader field (option 'l' or 'h' to limit to LF or HF)
+fpgaoff          Set FPGA off
+lcd              <HEX command> <count> -- Send command/data to LCD
+lcdreset         Hardware reset LCD
+readmem          [address] -- Read memory at decimal address from flash
+reset            Reset the Proxmark3
+setlfdivisor     <19 - 255> -- Drive LF antenna at 12Mhz/(divisor+1)
+setmux           <loraw|hiraw|lopkd|hipkd> -- Set the ADC mux to a specific value
+tune             Measure antenna tuning
+version          Show version inforation about the connected Proxmark
+#db# Prox/RFID mark3 RFID instrument       
+#db# bootrom: svn 848 2014-02-27 19:46:49       
+#db# os: svn 848-unclean 2014-05-04 20:26:51       
+#db# FPGA image built on 2014/ 5/ 4 at 21:52:48       
+uC: AT91SAM7S512 Rev A
+Embedded Processor: ARM7TDMI
+Nonvolatile Program Memory Size: 512K bytes
+Second Nonvolatile Program Memory Size: None
+Internal SRAM Size: 64K bytes
+Architecture Identifier: AT91SAM7Sxx Series
+Nonvolatile Program Memory Type: Embedded Flash Memory
+#db# Measuring antenna characteristics, please wait...       
+#db# Measuring complete, sending report back to host       
+
+# LF antenna:  0,00 V @   125.00 kHz
+# LF antenna:  0,00 V @   134.00 kHz
+# LF optimal:  0,00 V @ 12000,00 kHz
+# HF antenna: 10,51 V @    13.56 MHz
+# Your LF antenna is unusable.
+#db# Measuring antenna characteristics, please wait...       
+#db# Measuring complete, sending report back to host       
+
+# LF antenna: 20,14 V @   125.00 kHz
+# LF antenna: 25,65 V @   134.00 kHz
+# LF optimal: 25,65 V @   129,03 kHz
+# HF antenna: 10,51 V @    13.56 MHz
+help             This help
+14a              { ISO14443A RFIDs... }
+14b              { ISO14443B RFIDs... }
+15               { ISO15693 RFIDs... }
+epa              { German Identification Card... }
+legic            { LEGIC RFIDs... }
+iclass           { ICLASS RFIDs... }
+mf               { MIFARE RFIDs... }
+tune             Continuously measure HF antenna tuning
+help             This help. Use '<command> help' for details of a particular command.
+data             { Plot window / data buffer manipulation... }
+hf               { HF commands... }
+hw               { Hardware commands... }
+lf               { LF commands... }
+script           { Scripting commands }
+quit             Exit program
+exit             Exit program
+help             This help
+list             List ISO 14443a history
+reader           Act like an ISO14443 Type A reader
+cuids            <n> Collect n>0 ISO14443 Type A UIDs in one go
+sim              <UID> -- Fake ISO 14443a tag
+snoop            Eavesdrop ISO 14443 Type A
+raw              Send raw hex data to tag
+help             This help
+14a              { ISO14443A RFIDs... }
+14b              { ISO14443B RFIDs... }
+15               { ISO15693 RFIDs... }
+epa              { German Identification Card... }
+legic            { LEGIC RFIDs... }
+iclass           { ICLASS RFIDs... }
+mf               { MIFARE RFIDs... }
+tune             Continuously measure HF antenna tuning
+help             This help
+cmdread          <off period> <'0' period> <'1' period> <command> ['h'] -- Modulate LF reader field to send command before read (all periods in microseconds) (option 'h' for 134)
+em4x             { EM4X RFIDs... }
+flexdemod        Demodulate samples for FlexPass
+hid              { HID RFIDs... }
+io               { ioProx tags... }
+indalademod      ['224'] -- Demodulate samples for Indala 64 bit UID (option '224' for 224 bit)
+indalaclone      <UID> ['l']-- Clone Indala to T55x7 (tag must be in antenna)(UID in HEX)(option 'l' for 224 UID
+read             ['h' or <divisor>] -- Read 125/134 kHz LF ID-only tag (option 'h' for 134, alternatively: f=12MHz/(divisor+1))
+sim              [GAP] -- Simulate LF tag from buffer with optional GAP (in microseconds)
+simbidir         Simulate LF tag (with bidirectional data transmission between reader and tag)
+simman           <Clock> <Bitstream> [GAP] Simulate arbitrary Manchester LF tag
+ti               { TI RFIDs... }
+hitag            { Hitag tags and transponders... }
+vchdemod         ['clone'] -- Demodulate samples for VeriChip
+t55xx            { T55xx RFIDs... }
+pcf7931          {PCF7931 RFIDs...}
