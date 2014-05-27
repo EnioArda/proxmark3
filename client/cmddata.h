@@ -11,8 +11,6 @@
 #ifndef CMDDATA_H__
 #define CMDDATA_H__
 
-command_t * CmdDataCommands();
-
 int CmdData(const char *Cmd);
 
 int CmdAmp(const char *Cmd);
@@ -38,6 +36,7 @@ int CmdSamples(const char *Cmd);
 int CmdSave(const char *Cmd);
 int CmdScale(const char *Cmd);
 int CmdThreshold(const char *Cmd);
+int CmdDirectionalThreshold(const char *Cmd);
 int CmdZerocrossings(const char *Cmd);
 
 #endif

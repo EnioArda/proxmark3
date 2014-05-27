@@ -111,6 +111,8 @@ local _commands = {
 	CMD_MIFARE_CHKKEYS =                                                 0x0623,
 
 	CMD_MIFARE_SNIFFER =                                                 0x0630,
+	
+  CMD_ENIO_SNIFFER =                                                   0x0631,
 
 	CMD_UNKNOWN =                                                        0xFFFF,
 }

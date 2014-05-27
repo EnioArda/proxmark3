@@ -322,6 +322,80 @@ void SimulateTagHfListen(void)
 	DbpString("simulate tag (now type bitsamples)");
 }
 
+void optimizedSnoop(void) // Declared as RAMFUNC in apps.h!
+{
+	memset(BigBuf, 0, sizeof(BigBuf));
+  int n = sizeof(BigBuf) / sizeof(uint16_t);
+	
+  uint16_t *dest = (uint16_t *)BigBuf;
+  uint16_t *destend = dest + n;
+
+  AT91C_BASE_SSC->SSC_RFMR = SSC_FRAME_MODE_BITS_IN_WORD(16); // Setting Frame mode, 16 bits per word
+  // Reading data loop
+  while(dest <= destend)
+  {
+    if(AT91C_BASE_SSC->SSC_SR & AT91C_SSC_RXRDY)
+    {
+      *dest = (uint16_t)(AT91C_BASE_SSC->SSC_RHR);
+      dest = dest + 1;
+    }
+  }
+  //Resetting Frame mode (First set in fpgaloader.c)
+	AT91C_BASE_SSC->SSC_RFMR = SSC_FRAME_MODE_BITS_IN_WORD(8) |	AT91C_SSC_MSBF | SSC_FRAME_MODE_WORDS_PER_TRANSFER(0); 
+}
+
+
+void EnioSnoop(int samplesToSkip, int triggersToSkip)
+{
+  Dbprintf("Skipping first %d sample pairs, Skipping %d triggers.\n", samplesToSkip, triggersToSkip);
+  bool trigger_cnt;
+  // reset
+  FpgaWriteConfWord(FPGA_MAJOR_MODE_OFF);
+  LED_D_OFF();
+  SpinDelay(2000);
+  // Select correct configs
+  SetAdcMuxFor(GPIO_MUXSEL_HIPKD);
+  FpgaSetupSsc();
+  FpgaWriteConfWord(FPGA_MAJOR_MODE_HF_ENIO);
+  FpgaWriteEnioConfWord(FPGA_ENIO_SNOOP_HF);
+ 
+  AT91C_BASE_SSC->SSC_RFMR = SSC_FRAME_MODE_BITS_IN_WORD(16); // Setting Frame Mode For better performance on high speed data transfer.
+  
+  trigger_cnt = 0;
+  uint16_t r;
+	for(;;) {
+		if(AT91C_BASE_SSC->SSC_SR & (AT91C_SSC_RXRDY)) {
+			r = (uint16_t)AT91C_BASE_SSC->SSC_RHR;
+     if (!(trigger_cnt == triggersToSkip) && ( (r >> 8) >= 240)) 
+      {
+        Dbprintf("Trigger kicked! Value: %d.", r >> 8);
+        trigger_cnt++;
+        break;
+      } 
+		}
+	}
+  Dbprintf("Trigger kicked! Value: %d, Dumping Samples Hispeed now.", r >> 8);
+  int waitcount = samplesToSkip; // lets wait 40000 ticks of pck0
+	while(waitcount != 0) 
+  {
+		if(AT91C_BASE_SSC->SSC_SR & (AT91C_SSC_RXRDY)) 
+    {
+      waitcount--;
+		}
+	}
+  
+  // Snooooop!!!
+  optimizedSnoop();
+
+  //Resetting Frame mode (First set in fpgaloader.c) /already done in
+  //optimizedSnoop(), it doesnt hurt to do it here too.
+	AT91C_BASE_SSC->SSC_RFMR = SSC_FRAME_MODE_BITS_IN_WORD(8) |	AT91C_SSC_MSBF | SSC_FRAME_MODE_WORDS_PER_TRANSFER(0); 
+	
+  DbpString("Done.");
+  FpgaWriteEnioConfWord(FPGA_ENIO_SNOOP_LF); // reset back
+  LED_D_OFF();
+}
+
 void ReadMem(int addr)
 {
 	const uint8_t *data = ((uint8_t *)addr);
@@ -863,6 +937,10 @@ void UsbPacketReceived(uint8_t *packet, int len)
 		case CMD_SIMULATE_TAG_HF_LISTEN:
 			SimulateTagHfListen();
 			break;
+		
+    case CMD_ENIO_SNIFFER: // Enio
+			EnioSnoop(c->arg[0], c->arg[1]);
+			break;
 
 		case CMD_BUFF_CLEAR:
 			BufferClear();
@@ -1008,7 +1086,7 @@ void  __attribute__((noreturn)) AppMain(void)
 	AT91C_BASE_PMC->PMC_SCER = AT91C_PMC_PCK0;
 	// PCK0 is PLL clock / 4 = 96Mhz / 4 = 24Mhz
 	AT91C_BASE_PMC->PMC_PCKR[0] = AT91C_PMC_CSS_PLL_CLK |
-		AT91C_PMC_PRES_CLK_4;
+		AT91C_PMC_PRES_CLK_4; // Enio original 4 for 24Mhz pck0, set to 2 for 48 MHZ pck0
 	AT91C_BASE_PIOA->PIO_OER = GPIO_PCK0;
 
 	// Reset SPI

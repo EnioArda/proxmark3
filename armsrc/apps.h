@@ -63,10 +63,12 @@ void DoAcquisition125k(void);
 extern int ToSendMax;
 extern uint8_t ToSend[];
 extern uint32_t BigBuf[];
+void RAMFUNC optimizedSnoop(void);
 
 /// fpga.h
 void FpgaSendCommand(uint16_t cmd, uint16_t v);
 void FpgaWriteConfWord(uint8_t v);
+void FpgaWriteEnioConfWord(uint8_t v); // Enio
 void FpgaDownloadAndGo(void);
 void FpgaGatherVersion(char *dst, int len);
 void FpgaSetupSsc(void);
@@ -79,8 +81,13 @@ void SetAdcMuxFor(uint32_t whichGpio);
 // Definitions for the FPGA commands.
 #define FPGA_CMD_SET_CONFREG						(1<<12)
 #define FPGA_CMD_SET_DIVISOR						(2<<12)
+#define FPGA_CMD_SET_ENIOCONFREG						(4<<12) // ENIOCONFREG
+// Definitions for the Enio Configuration word.
+#define FPGA_ENIO_SNOOP_HF				(1<<0)
+#define FPGA_ENIO_SNOOP_LF				(0<<0)
 // Definitions for the FPGA configuration word.
 #define FPGA_MAJOR_MODE_LF_READER					(0<<5)
+#define FPGA_MAJOR_MODE_HF_ENIO		      	(0<<5)
 #define FPGA_MAJOR_MODE_LF_EDGE_DETECT				(1<<5)
 #define FPGA_MAJOR_MODE_HF_READER_TX				(2<<5)
 #define FPGA_MAJOR_MODE_HF_READER_RX_XCORR			(3<<5)

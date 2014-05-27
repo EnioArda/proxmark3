@@ -11,6 +11,7 @@
 *.dll
 *.moc.cpp
 *.exe
+proxmark3.log
 proxmark
 proxmark3
 flasher

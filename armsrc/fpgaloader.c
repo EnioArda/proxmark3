@@ -403,6 +403,11 @@ void FpgaWriteConfWord(uint8_t v)
 	FpgaSendCommand(FPGA_CMD_SET_CONFREG, v);
 }
 
+void FpgaWriteEnioConfWord(uint8_t v)
+{
+	FpgaSendCommand(FPGA_CMD_SET_ENIOCONFREG, v);
+}
+
 //-----------------------------------------------------------------------------
 // Set up the CMOS switches that mux the ADC: four switches, independently
 // closable, but should only close one at a time. Not an FPGA thing, but

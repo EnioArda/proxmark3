@@ -17,6 +17,7 @@
 `include "lo_edge_detect.v"
 `include "hi_read_tx.v"
 `include "hi_read_rx_xcorr.v"
+`include "hi_enio.v"
 `include "hi_simulate.v"
 `include "hi_iso14443a.v"
 `include "util.v"
@@ -63,6 +64,7 @@ module fpga(
 reg [15:0] shift_reg;
 reg [7:0] divisor;
 reg [7:0] conf_word;
+reg [7:0] conf_enio = 8'd0;
 
 // We switch modes between transmitting to the 13.56 MHz tag and receiving
 // from it, which means that we must make sure that we can do so without
@@ -72,6 +74,7 @@ begin
 	case(shift_reg[15:12])
 		4'b0001: conf_word <= shift_reg[7:0];		// FPGA_CMD_SET_CONFREG
 		4'b0010: divisor <= shift_reg[7:0];			// FPGA_CMD_SET_DIVISOR
+		4'b0100: conf_enio <= shift_reg[7:0];			// FPGA_CMD_SET_ENIOCONFREG
 	endcase
 end
 
@@ -172,6 +175,17 @@ hi_read_rx_xcorr hrxc(
 	hi_read_rx_xcorr_848, hi_read_rx_xcorr_snoop, hi_read_rx_xcorr_quarter
 );
 
+hi_enio he(
+	pck0, ck_1356meg, ck_1356megb,
+	he_pwr_lo, he_pwr_hi, he_pwr_oe1, he_pwr_oe2, he_pwr_oe3,	he_pwr_oe4,
+	adc_d, he_adc_clk,
+	he_ssp_frame, he_ssp_din, ssp_dout, he_ssp_clk,
+	cross_hi, cross_lo,
+	he_dbg,
+	hi_read_rx_xcorr_848, hi_read_rx_xcorr_snoop, hi_read_rx_xcorr_quarter,
+  conf_enio, divisor
+);
+
 hi_simulate hs(
 	pck0, ck_1356meg, ck_1356megb,
 	hs_pwr_lo, hs_pwr_hi, hs_pwr_oe1, hs_pwr_oe2, hs_pwr_oe3, hs_pwr_oe4,
@@ -193,26 +207,37 @@ hi_iso14443a hisn(
 );
 
 // Major modes:
-//   000 --  LF reader (generic)
+//   000 --  LF reader (generic) // new:  HF generic snoop (Enio) // 
 //   001 --  LF simulated tag (generic)
 //   010 --  HF reader, transmitting to tag; modulation depth selectable
-//   011 --  HF reader, receiving from tag, correlating as it goes; frequency selectable
+//   011 --  HF reader, receiving from tag, correlating as it goes; frequency selectable 
 //   100 --  HF simulated tag
 //   101 --  HF ISO14443-A
 //   110 --  LF passthrough
 //   111 --  everything off
+//
+//   // Definitions for the FPGA configuration word.
+//   #define FPGA_MAJOR_MODE_LF_READER					(0<<5) 000
+//   #define FPGA_MAJOR_MODE_LF_EDGE_DETECT		  (1<<5) 001
+//   #define FPGA_MAJOR_MODE_HF_READER_TX				(2<<5) 101
+//   #define FPGA_MAJOR_MODE_HF_READER_RX_XCORR	(3<<5) 011
+//   #define FPGA_MAJOR_MODE_HF_SIMULATOR				(4<<5) 100
+//   #define FPGA_MAJOR_MODE_HF_ISO14443A				(5<<5) 101
+//   #define FPGA_MAJOR_MODE_LF_PASSTHRU				(6<<5) 110
+//   #define FPGA_MAJOR_MODE_OFF							  (7<<5) 111
 
-mux8 mux_ssp_clk		(major_mode, ssp_clk,   lr_ssp_clk,   ls_ssp_clk,   ht_ssp_clk,   hrxc_ssp_clk,   hs_ssp_clk,   hisn_ssp_clk,   lp_ssp_clk,   1'b0);
-mux8 mux_ssp_din		(major_mode, ssp_din,   lr_ssp_din,   ls_ssp_din,   ht_ssp_din,   hrxc_ssp_din,   hs_ssp_din,   hisn_ssp_din,   lp_ssp_din,   1'b0);
-mux8 mux_ssp_frame		(major_mode, ssp_frame, lr_ssp_frame, ls_ssp_frame, ht_ssp_frame, hrxc_ssp_frame, hs_ssp_frame, hisn_ssp_frame, lp_ssp_frame, 1'b0);
-mux8 mux_pwr_oe1		(major_mode, pwr_oe1,   lr_pwr_oe1,   ls_pwr_oe1,   ht_pwr_oe1,   hrxc_pwr_oe1,   hs_pwr_oe1,   hisn_pwr_oe1,   lp_pwr_oe1,   1'b0);
-mux8 mux_pwr_oe2		(major_mode, pwr_oe2,   lr_pwr_oe2,   ls_pwr_oe2,   ht_pwr_oe2,   hrxc_pwr_oe2,   hs_pwr_oe2,   hisn_pwr_oe2,   lp_pwr_oe2,   1'b0);
-mux8 mux_pwr_oe3		(major_mode, pwr_oe3,   lr_pwr_oe3,   ls_pwr_oe3,   ht_pwr_oe3,   hrxc_pwr_oe3,   hs_pwr_oe3,   hisn_pwr_oe3,   lp_pwr_oe3,   1'b0);
-mux8 mux_pwr_oe4		(major_mode, pwr_oe4,   lr_pwr_oe4,   ls_pwr_oe4,   ht_pwr_oe4,   hrxc_pwr_oe4,   hs_pwr_oe4,   hisn_pwr_oe4,   lp_pwr_oe4,   1'b0);
-mux8 mux_pwr_lo			(major_mode, pwr_lo,    lr_pwr_lo,    ls_pwr_lo,    ht_pwr_lo,    hrxc_pwr_lo,    hs_pwr_lo,    hisn_pwr_lo,    lp_pwr_lo,    1'b0);
-mux8 mux_pwr_hi			(major_mode, pwr_hi,    lr_pwr_hi,    ls_pwr_hi,    ht_pwr_hi,    hrxc_pwr_hi,    hs_pwr_hi,    hisn_pwr_hi,    lp_pwr_hi,    1'b0);
-mux8 mux_adc_clk		(major_mode, adc_clk,   lr_adc_clk,   ls_adc_clk,   ht_adc_clk,   hrxc_adc_clk,   hs_adc_clk,   hisn_adc_clk,   lp_adc_clk,   1'b0);
-mux8 mux_dbg			(major_mode, dbg,       lr_dbg,       ls_dbg,       ht_dbg,       hrxc_dbg,       hs_dbg,       hisn_dbg,       lp_dbg,       1'b0);
+
+mux8 mux_ssp_clk		(major_mode, ssp_clk,   he_ssp_clk,   ls_ssp_clk,   ht_ssp_clk,   hrxc_ssp_clk,   hs_ssp_clk,   hisn_ssp_clk,   lp_ssp_clk,   1'b0);
+mux8 mux_ssp_din		(major_mode, ssp_din,   he_ssp_din,   ls_ssp_din,   ht_ssp_din,   hrxc_ssp_din,   hs_ssp_din,   hisn_ssp_din,   lp_ssp_din,   1'b0);
+mux8 mux_ssp_frame	(major_mode, ssp_frame, he_ssp_frame, ls_ssp_frame, ht_ssp_frame, hrxc_ssp_frame, hs_ssp_frame, hisn_ssp_frame, lp_ssp_frame, 1'b0);
+mux8 mux_pwr_oe1		(major_mode, pwr_oe1,   he_pwr_oe1,   ls_pwr_oe1,   ht_pwr_oe1,   hrxc_pwr_oe1,   hs_pwr_oe1,   hisn_pwr_oe1,   lp_pwr_oe1,   1'b0);
+mux8 mux_pwr_oe2		(major_mode, pwr_oe2,   he_pwr_oe2,   ls_pwr_oe2,   ht_pwr_oe2,   hrxc_pwr_oe2,   hs_pwr_oe2,   hisn_pwr_oe2,   lp_pwr_oe2,   1'b0);
+mux8 mux_pwr_oe3		(major_mode, pwr_oe3,   he_pwr_oe3,   ls_pwr_oe3,   ht_pwr_oe3,   hrxc_pwr_oe3,   hs_pwr_oe3,   hisn_pwr_oe3,   lp_pwr_oe3,   1'b0);
+mux8 mux_pwr_oe4		(major_mode, pwr_oe4,   he_pwr_oe4,   ls_pwr_oe4,   ht_pwr_oe4,   hrxc_pwr_oe4,   hs_pwr_oe4,   hisn_pwr_oe4,   lp_pwr_oe4,   1'b0);
+mux8 mux_pwr_lo			(major_mode, pwr_lo,    he_pwr_lo,    ls_pwr_lo,    ht_pwr_lo,    hrxc_pwr_lo,    hs_pwr_lo,    hisn_pwr_lo,    lp_pwr_lo,    1'b0);
+mux8 mux_pwr_hi			(major_mode, pwr_hi,    he_pwr_hi,    ls_pwr_hi,    ht_pwr_hi,    hrxc_pwr_hi,    hs_pwr_hi,    hisn_pwr_hi,    lp_pwr_hi,    1'b0);
+mux8 mux_adc_clk		(major_mode, adc_clk,   he_adc_clk,   ls_adc_clk,   ht_adc_clk,   hrxc_adc_clk,   hs_adc_clk,   hisn_adc_clk,   lp_adc_clk,   1'b0);
+mux8 mux_dbg			  (major_mode, dbg,       he_dbg,       ls_dbg,       ht_dbg,       hrxc_dbg,       hs_dbg,       hisn_dbg,       lp_dbg,       1'b0);
 
 // In all modes, let the ADC's outputs be enabled.
 assign adc_noe = 1'b0;
