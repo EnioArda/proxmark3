@@ -51,11 +51,7 @@ static command_t CommandTable[] =
   {"iclass",      CmdHFiClass,      1, "{ ICLASS RFIDs... }"},
   {"mf",      		CmdHFMF,		      1, "{ MIFARE RFIDs... }"},
   {"tune",        CmdHFTune,        0, "Continuously measure HF antenna tuning"},
-<<<<<<< HEAD
   {"snoop",       CmdHFSnoop,       0, "<samples to skip (10000)> <triggers to skip (1)> Generic LF/HF Snoop in Testing stage"},
-=======
-  {"snoop",       CmdHFSnoop,       0, "Generic LF/HF Snoop in Testing stage"},
->>>>>>> 81f6cb870b8aa4def209eec7b018851b8566f897
   {NULL, NULL, 0, NULL}
 };
 
